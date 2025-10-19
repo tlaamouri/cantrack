@@ -1,215 +1,433 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<title>CanTrack v1.8 - CAN JSON Viewer</title>
-<script src="https://cdn.plot.ly/plotly-2.32.0.min.js"></script>
-<style>
-body {
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CanTrack v1.8 - CAN JSON Viewer</title>
+  <script src="https://cdn.plot.ly/plotly-2.32.0.min.js"></script>
+  <style>
+    :root {
+      --primary: #1f3b6c;
+      --primary-dark: #172b4d;
+      --primary-light: #335696;
+      --bg: #f5f7fa;
+      --card: #ffffff;
+      --text: #333333;
+      --border: #e0e6ed;
+      --shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+      --radius: 8px;
+      --sidebar-width: 350px;
+      --header-height: 60px;
+    }
 
+    * {
+      box-sizing: border-box;
+    }
 
-    
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    margin: 0;
-    padding: 0;
-    background-color: #f5f7fa;
-    color: #333;
-}
-header {
-    background-color: #1f3b6c;
-    color: white;
-    padding: 15px 20px;
-    font-size: 1.4em;
-    font-weight: bold;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-}
-.container {
-    display: flex;
-    height: calc(100vh - 60px);
-}
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
+      overflow: hidden;
+      height: 100vh;
+    }
 
+    header {
+      display: flex;
+      align-items: center;
+      height: var(--header-height);
+      background-color: var(--primary);
+      color: white;
+      padding: 0 20px;
+      box-shadow: var(--shadow);
+      z-index: 10;
+    }
 
-#component1 {
-    margin-bottom: 15px; /* Adds space below */
-}
+    #toggleBtn {
+      width: 40px;
+      height: 40px;
+      background: none;
+      border: none;
+      color: white;
+      font-size: 20px;
+      cursor: pointer;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.2s;
+      margin-right: 12px;
+    }
+    #toggleBtn:hover {
+      background: rgba(255, 255, 255, 0.15);
+    }
 
-#component2 {
-    margin-top: 20px; /* Adds space above */
-}
+    .header-title {
+      font-size: 1.25rem;
+      font-weight: 600;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      flex: 1;
+    }
 
-#controls {
-    width: 350px;
-    background-color: white;
-    padding: 20px;
-    box-shadow: 2px 0 5px rgba(0,0,0,0.05);
-    overflow-y: auto;
-}
-#controls h3 {
-    margin-top: 0;
-    color: #1f3b6c;
-}
-#signalSelect {
-    width: 100%;
-    height: 300px;
-    margin-bottom: 10px;
-}
-button {
-    padding: 8px 16px;
-    font-size: 15px;
-    cursor: pointer;
-    border: none;
-    border-radius: 5px;
-    background-color: #1f3b6c;
-    color: white;
-    margin-top: 5px;
-    transition: background 0.3s;
-}
-button:hover {
-    background-color: #335696;
-}
-#chartPanel {
-    flex-grow: 1;
-    padding: 20px;
-    display: flex;
-    flex-direction: column;
-}
-#chart {
-    flex-grow: 1;
-    border: 1px solid #ccc;
-    border-radius: 5px;
-    background-color: white;
-}
-#filterPanel {
-    margin-top: 10px;
-    background-color: #fff;
-    padding: 15px;
-    border-radius: 5px;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-}
-#resultTable {
-    width: 100%;
-    border-collapse: collapse;
-    margin-top: 10px;
-    max-height: 200px;
-    overflow-y: auto;
-    display: block;
-}
-#resultTable thead {
-    background-color: #1f3b6c;
-    color: white;
-    position: sticky;
-    top: 0;
-}
-#resultTable th, #resultTable td {
-    padding: 6px 8px;
-    border: 1px solid #ddd;
-    text-align: center;
-}
-#resultTable tbody tr:nth-child(even) {
-    background-color: #f1f3f5;
-}
-input[type="number"], input[type="file"] {
-    padding: 5px 8px;
-    margin-right: 10px;
-    border-radius: 4px;
-    border: 1px solid #ccc;
-    font-size: 14px;
-}
-label {
-    margin-right: 10px;
-    font-weight: bold;
-}
-</style>
+    .container {
+      display: flex;
+      height: calc(100vh - var(--header-height));
+      overflow: hidden;
+    }
+
+    #controls {
+      width: var(--sidebar-width);
+      background: var(--card);
+      padding: 20px;
+      box-shadow: var(--shadow);
+      overflow-y: auto;
+      flex-shrink: 0;
+      display: flex;
+      flex-direction: column;
+    }
+
+    #controls.collapsed {
+      width: 0;
+      padding: 0;
+      overflow: hidden;
+    }
+
+    #controls h3 {
+      margin: 0 0 16px 0;
+      color: var(--primary);
+      font-size: 1.1rem;
+      font-weight: 600;
+    }
+
+    #fileInput {
+      width: 100%;
+      margin-bottom: 16px;
+    }
+
+    #signalSelect {
+      width: 100%;
+      height: 220px;
+      margin-bottom: 16px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 8px;
+      font-size: 14px;
+    }
+
+    button {
+      width: 100%;
+      padding: 10px;
+      font-size: 15px;
+      font-weight: 500;
+      cursor: pointer;
+      border: none;
+      border-radius: var(--radius);
+      background-color: var(--primary);
+      color: white;
+      margin-top: 8px;
+      transition: background 0.2s;
+    }
+    button:hover:not(:disabled) {
+      background-color: var(--primary-light);
+    }
+    button:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    #filterPanel {
+      margin-top: 24px;
+      background-color: var(--card);
+      padding: 16px;
+      border-radius: var(--radius);
+      box-shadow: inset 0 0 0 1px var(--border);
+    }
+
+    #filterPanel h3 {
+      margin-top: 0;
+    }
+
+    #filterPanel label {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+      font-weight: 600;
+      font-size: 14px;
+    }
+
+    #filterPanel input[type="number"] {
+      width: 110px;
+      padding: 6px 10px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      text-align: right;
+      font-size: 14px;
+    }
+
+    #mainContent {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow-y: auto;
+      background: var(--bg);
+    }
+
+    #chartPanel {
+      padding: 20px;
+      background: var(--card);
+      margin: 20px;
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      flex: none;
+    }
+
+    #chart {
+      height: 500px;
+      width: 100%;
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      background: var(--card);
+    }
+
+    .empty-state {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      color: #777;
+      font-style: italic;
+    }
+
+    #filteredResults {
+      padding: 20px;
+      margin: 0 20px 20px 20px;
+      background: var(--card);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+    }
+
+    #filteredResults h3 {
+      margin-top: 0;
+      color: var(--primary);
+      font-size: 1.1rem;
+      font-weight: 600;
+    }
+
+    #resultTable {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+
+    #resultTable th,
+    #resultTable td {
+      padding: 10px;
+      text-align: center;
+      border: 1px solid var(--border);
+    }
+
+    #resultTable thead th {
+      background-color: var(--primary);
+      color: white;
+    }
+
+    #resultTable tbody tr:nth-child(even) {
+      background-color: #f9fafc;
+    }
+  </style>
 </head>
 <body>
-<header>CanTrack v1.8 - CAN JSON Viewer (by tabit.laamouri@gmail.com)</header>
-<div class="container">
+  <header>
+    <button id="toggleBtn" aria-label="Toggle sidebar">☰</button>
+    <div class="header-title">CanTrack v1.8 - CAN JSON Viewer (by tabit.laamouri@gmail.com)</div>
+  </header>
+
+  <div class="container">
     <div id="controls">
-        <h3>Upload & Signals</h3>
-        <input type="file" id="fileInput" accept=".json">
-<div id="component1"></div>
-        <select id="signalSelect" multiple></select>
-        <button id="plotBtn">Plot Selected Signals</button>
-        <div id="filterPanel">
-            <h3>Filter Signals by Time</h3>
-            <label>Start Time: <input type="number" id="startTime" step="0.001" value="0"></label>
-            <div id="component1"></div>
-            <label>End Time: <input type="number" id="endTime" step="0.001" value="10"></label>
-            <button id="filterBtn">Show Filtered Values</button>
-            <table id="resultTable">
-                <thead><tr><th>Time (s)</th><th>Signal</th><th>Value</th></tr></thead>
-                <tbody></tbody>
-            </table>
+      <h3>Upload & Signals</h3>
+      <input type="file" id="fileInput" accept=".json" />
+      <select id="signalSelect" multiple>
+        <option disabled>Select a file to load signals</option>
+      </select>
+      <button id="plotBtn" disabled>Plot Selected Signals</button>
+
+      <div id="filterPanel">
+        <h3>Filter Signals by Time</h3>
+        <label>
+          Start Time (s):
+          <input type="number" id="startTime" step="0.001" value="0" min="0" />
+        </label>
+        <label>
+          End Time (s):
+          <input type="number" id="endTime" step="0.001" value="10" min="0" />
+        </label>
+        <button id="filterBtn" disabled>Show Filtered Values</button>
+      </div>
+    </div>
+
+    <div id="mainContent">
+      <div id="chartPanel">
+        <div id="chart">
+          <div class="empty-state">Upload a JSON file and select signals to plot</div>
         </div>
-    </div>
-    <div id="chartPanel">
-        <div id="chart"></div>
-    </div>
-</div>
+      </div>
 
-<script>
-let data = {};
-const fileInput = document.getElementById('fileInput');
-const select = document.getElementById('signalSelect');
-const chartDiv = document.getElementById('chart');
-const plotBtn = document.getElementById('plotBtn');
-const filterBtn = document.getElementById('filterBtn');
-const startInput = document.getElementById('startTime');
-const endInput = document.getElementById('endTime');
-const resultTbody = document.querySelector('#resultTable tbody');
+      <div id="filteredResults">
+        <h3>Filtered Signal Values</h3>
+        <table id="resultTable">
+          <thead>
+            <tr>
+              <th>Time (s)</th>
+              <th>Signal</th>
+              <th>Value</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
 
-fileInput.addEventListener('change', e => {
-    const file = e.target.files[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = () => {
+  <script>
+    let data = null;
+    const fileInput = document.getElementById('fileInput');
+    const signalSelect = document.getElementById('signalSelect');
+    const chartDiv = document.getElementById('chart');
+    const plotBtn = document.getElementById('plotBtn');
+    const filterBtn = document.getElementById('filterBtn');
+    const startTimeInput = document.getElementById('startTime');
+    const endTimeInput = document.getElementById('endTime');
+    const resultTbody = document.querySelector('#resultTable tbody');
+    const toggleBtn = document.getElementById('toggleBtn');
+    const controlsDiv = document.getElementById('controls');
+
+    toggleBtn.addEventListener('click', () => {
+      controlsDiv.classList.toggle('collapsed');
+    });
+
+    fileInput.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = () => {
         try {
-            data = JSON.parse(reader.result);
-            select.innerHTML = '';
-            Object.keys(data).forEach(sig => {
-                const opt = document.createElement('option');
-                opt.value = sig;
-                opt.textContent = sig;
-                select.appendChild(opt);
-            });
-            if(select.options.length>0) select.options[0].selected = true;
-            plotSelectedSignals();
+          const parsed = JSON.parse(reader.result);
+          if (typeof parsed !== 'object' || parsed === null || Array.isArray(parsed)) {
+            throw new Error('Invalid JSON structure: expected an object');
+          }
+          data = parsed;
+          populateSignalSelect();
+          plotBtn.disabled = false;
+          filterBtn.disabled = false;
         } catch (err) {
-            alert("❌ Failed to parse JSON: " + err);
+          alert(`❌ Invalid JSON file:\n${err.message}`);
+          resetUI();
         }
-    };
-    reader.readAsText(file);
-});
-
-plotBtn.addEventListener('click', plotSelectedSignals);
-filterBtn.addEventListener('click', filterSignalsByTime);
-
-function plotSelectedSignals() {
-    const selectedSignals = Array.from(select.selectedOptions).map(o => o.value);
-    const traces = selectedSignals.map(sig => {
-        const samples = data[sig] || [];
-        return { x: samples.map(p => p.time), y: samples.map(p => p.value), mode: 'lines', name: sig, type: 'scattergl' };
+      };
+      reader.onerror = () => alert('❌ Failed to read file.');
+      reader.readAsText(file);
     });
-    if(traces.length === 0){ chartDiv.innerHTML = "<p>No signal selected.</p>"; return; }
-    Plotly.newPlot(chartDiv, traces, { title: 'Selected CAN Signals', xaxis: {title: 'Time (s)'}, yaxis: {title: 'Value'}, margin: {t: 40, l: 60, r: 20, b: 60}, legend: {orientation: 'h'}, responsive: true });
-}
 
-function filterSignalsByTime() {
-    const selectedSignals = Array.from(select.selectedOptions).map(o => o.value);
-    const start = parseFloat(startInput.value) || 0;
-    const end = parseFloat(endInput.value) || Number.MAX_VALUE;
-    resultTbody.innerHTML = '';
-    selectedSignals.forEach(sig => {
+    function resetUI() {
+      data = null;
+      signalSelect.innerHTML = '<option disabled selected>Select a file to load signals</option>';
+      plotBtn.disabled = true;
+      filterBtn.disabled = true;
+      resultTbody.innerHTML = '';
+      chartDiv.innerHTML = '<div class="empty-state">Upload a JSON file and select signals to plot</div>';
+    }
+
+    function populateSignalSelect() {
+      signalSelect.innerHTML = '';
+      Object.keys(data).forEach((sig) => {
+        const opt = document.createElement('option');
+        opt.value = sig;
+        opt.textContent = sig;
+        signalSelect.appendChild(opt);
+      });
+      if (signalSelect.options.length > 0) {
+        signalSelect.options[0].selected = true;
+      }
+      plotSelectedSignals();
+    }
+
+    plotBtn.addEventListener('click', plotSelectedSignals);
+    filterBtn.addEventListener('click', filterSignalsByTime);
+
+    function plotSelectedSignals() {
+      if (!data) return;
+
+      const selected = Array.from(signalSelect.selectedOptions).map((o) => o.value);
+      if (selected.length === 0) {
+        chartDiv.innerHTML = '<div class="empty-state">No signals selected</div>';
+        return;
+      }
+
+      const traces = selected.map((sig) => {
         const samples = data[sig] || [];
-        samples.forEach(p => {
-            if(p.time >= start && p.time <= end) {
-                const row = document.createElement('tr');
-                row.innerHTML = `<td>${p.time.toFixed(3)}</td><td>${sig}</td><td>${p.value}</td>`;
-                resultTbody.appendChild(row);
-            }
+        return {
+          x: samples.map((p) => p.time),
+          y: samples.map((p) => p.value),
+          mode: 'lines',
+          name: sig,
+          type: 'scattergl',
+        };
+      });
+
+      const layout = {
+        title: 'Selected CAN Signals',
+        xaxis: { title: 'Time (s)' },
+        yaxis: { title: 'Value' },
+        margin: { t: 40, l: 60, r: 30, b: 60 },
+        legend: { orientation: 'h', yanchor: 'bottom', y: 1.02 },
+        hovermode: 'closest',
+        responsive: true,
+      };
+
+      Plotly.newPlot(chartDiv, traces, layout, { displaylogo: false, modeBarButtonsToRemove: ['select2d', 'lasso2d'] });
+    }
+
+    function filterSignalsByTime() {
+      if (!data) return;
+
+      const selected = Array.from(signalSelect.selectedOptions).map((o) => o.value);
+      const start = parseFloat(startTimeInput.value) || 0;
+      const end = parseFloat(endTimeInput.value) || Infinity;
+
+      if (start > end) {
+        alert('⚠️ Start time must be ≤ End time.');
+        return;
+      }
+
+      resultTbody.innerHTML = '';
+      let rowCount = 0;
+
+      selected.forEach((sig) => {
+        const samples = data[sig] || [];
+        samples.forEach((p) => {
+          if (p.time >= start && p.time <= end) {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+              <td>${p.time.toFixed(3)}</td>
+              <td>${sig}</td>
+              <td>${p.value}</td>
+            `;
+            resultTbody.appendChild(row);
+            rowCount++;
+          }
         });
-    });
-}
-</script>
+      });
+
+      if (rowCount === 0) {
+        resultTbody.innerHTML = `<tr><td colspan="3" style="text-align:center;color:#777;">No data in selected range</td></tr>`;
+      }
+    }
+  </script>
 </body>
 </html>
