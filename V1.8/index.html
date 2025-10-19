@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>CanTrack v1.8 - CAN JSON Viewer</title>
+<script src="https://cdn.plot.ly/plotly-2.32.0.min.js"></script>
+<style>
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #f5f7fa;
+    color: #333;
+}
+header {
+    background-color: #1f3b6c;
+    color: white;
+    padding: 15px 20px;
+    font-size: 1.4em;
+    font-weight: bold;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+.container {
+    display: flex;
+    height: calc(100vh - 60px);
+}
+
+
+#component1 {
+    margin-bottom: 15px; /* Adds space below */
+}
+
+#component2 {
+    margin-top: 20px; /* Adds space above */
+}
+
+#controls {
+    width: 350px;
+    background-color: white;
+    padding: 20px;
+    box-shadow: 2px 0 5px rgba(0,0,0,0.05);
+    overflow-y: auto;
+}
+#controls h3 {
+    margin-top: 0;
+    color: #1f3b6c;
+}
+#signalSelect {
+    width: 100%;
+    height: 300px;
+    margin-bottom: 10px;
+}
+button {
+    padding: 8px 16px;
+    font-size: 15px;
+    cursor: pointer;
+    border: none;
+    border-radius: 5px;
+    background-color: #1f3b6c;
+    color: white;
+    margin-top: 5px;
+    transition: background 0.3s;
+}
+button:hover {
+    background-color: #335696;
+}
+#chartPanel {
+    flex-grow: 1;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+}
+#chart {
+    flex-grow: 1;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    background-color: white;
+}
+#filterPanel {
+    margin-top: 10px;
+    background-color: #fff;
+    padding: 15px;
+    border-radius: 5px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+}
+#resultTable {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+    max-height: 200px;
+    overflow-y: auto;
+    display: block;
+}
+#resultTable thead {
+    background-color: #1f3b6c;
+    color: white;
+    position: sticky;
+    top: 0;
+}
+#resultTable th, #resultTable td {
+    padding: 6px 8px;
+    border: 1px solid #ddd;
+    text-align: center;
+}
+#resultTable tbody tr:nth-child(even) {
+    background-color: #f1f3f5;
+}
+input[type="number"], input[type="file"] {
+    padding: 5px 8px;
+    margin-right: 10px;
+    border-radius: 4px;
+    border: 1px solid #ccc;
+    font-size: 14px;
+}
+label {
+    margin-right: 10px;
+    font-weight: bold;
+}
+</style>
+</head>
+<body>
+<header>CanTrack v1.8 - CAN JSON Viewer (by tabit.laamouri@gmail.com)</header>
+<div class="container">
+    <div id="controls">
+        <h3>Upload & Signals</h3>
+        <input type="file" id="fileInput" accept=".json">
+<div id="component1"></div>
+        <select id="signalSelect" multiple></select>
+        <button id="plotBtn">Plot Selected Signals</button>
+        <div id="filterPanel">
+            <h3>Filter Signals by Time</h3>
+            <label>Start Time: <input type="number" id="startTime" step="0.001" value="0"></label>
+            <div id="component1"></div>
+            <label>End Time: <input type="number" id="endTime" step="0.001" value="10"></label>
+            <button id="filterBtn">Show Filtered Values</button>
+            <table id="resultTable">
+                <thead><tr><th>Time (s)</th><th>Signal</th><th>Value</th></tr></thead>
+                <tbody></tbody>
+            </table>
+        </div>
+    </div>
+    <div id="chartPanel">
+        <div id="chart"></div>
+    </div>
+</div>
+
+<script>
+let data = {};
+const fileInput = document.getElementById('fileInput');
+const select = document.getElementById('signalSelect');
+const chartDiv = document.getElementById('chart');
+const plotBtn = document.getElementById('plotBtn');
+const filterBtn = document.getElementById('filterBtn');
+const startInput = document.getElementById('startTime');
+const endInput = document.getElementById('endTime');
+const resultTbody = document.querySelector('#resultTable tbody');
+
+fileInput.addEventListener('change', e => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+        try {
+            data = JSON.parse(reader.result);
+            select.innerHTML = '';
+            Object.keys(data).forEach(sig => {
+                const opt = document.createElement('option');
+                opt.value = sig;
+                opt.textContent = sig;
+                select.appendChild(opt);
+            });
+            if(select.options.length>0) select.options[0].selected = true;
+            plotSelectedSignals();
+        } catch (err) {
+            alert("❌ Failed to parse JSON: " + err);
+        }
+    };
+    reader.readAsText(file);
+});
+
+plotBtn.addEventListener('click', plotSelectedSignals);
+filterBtn.addEventListener('click', filterSignalsByTime);
+
+function plotSelectedSignals() {
+    const selectedSignals = Array.from(select.selectedOptions).map(o => o.value);
+    const traces = selectedSignals.map(sig => {
+        const samples = data[sig] || [];
+        return { x: samples.map(p => p.time), y: samples.map(p => p.value), mode: 'lines', name: sig, type: 'scattergl' };
+    });
+    if(traces.length === 0){ chartDiv.innerHTML = "<p>No signal selected.</p>"; return; }
+    Plotly.newPlot(chartDiv, traces, { title: 'Selected CAN Signals', xaxis: {title: 'Time (s)'}, yaxis: {title: 'Value'}, margin: {t: 40, l: 60, r: 20, b: 60}, legend: {orientation: 'h'}, responsive: true });
+}
+
+function filterSignalsByTime() {
+    const selectedSignals = Array.from(select.selectedOptions).map(o => o.value);
+    const start = parseFloat(startInput.value) || 0;
+    const end = parseFloat(endInput.value) || Number.MAX_VALUE;
+    resultTbody.innerHTML = '';
+    selectedSignals.forEach(sig => {
+        const samples = data[sig] || [];
+        samples.forEach(p => {
+            if(p.time >= start && p.time <= end) {
+                const row = document.createElement('tr');
+                row.innerHTML = `<td>${p.time.toFixed(3)}</td><td>${sig}</td><td>${p.value}</td>`;
+                resultTbody.appendChild(row);
+            }
+        });
+    });
+}
+</script>
+</body>
+</html>
