@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>CanTrack v2.0 – Virtual Signals Guide</title>
+  <style>
+    :root {
+      --primary: #1e3a8a;
+      --bg: #ffffff;
+      --text: #111827;
+      --text-secondary: #4b5563;
+      --border: #e5e7eb;
+      --code-bg: #f9fafb;
+      --success: #ecfdf5;
+      --warning: #fffbeb;
+      --danger: #fef2f2;
+    }
+
+    .dark {
+      --bg: #0f172a;
+      --text: #f1f5f9;
+      --text-secondary: #cbd5e1;
+      --border: #334155;
+      --code-bg: #1e293b;
+      --success: #0c4a6e;
+      --warning: #7c2d12;
+      --danger: #7f1d1d;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      margin: 0;
+      padding: 2rem;
+      max-width: 900px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    h1, h2, h3 {
+      color: var(--primary);
+      margin-top: 1.8em;
+      margin-bottom: 0.8em;
+    }
+
+    h1 {
+      font-size: 2.2rem;
+      border-bottom: 2px solid var(--border);
+      padding-bottom: 0.5rem;
+    }
+
+    h2 {
+      font-size: 1.5rem;
+    }
+
+    h3 {
+      font-size: 1.2rem;
+    }
+
+    p, ul, ol {
+      margin: 1rem 0;
+    }
+
+    code {
+      font-family: Consolas, Monaco, monospace;
+      background: var(--code-bg);
+      padding: 0.2em 0.4em;
+      border-radius: 4px;
+      font-size: 0.95em;
+    }
+
+    pre {
+      background: var(--code-bg);
+      padding: 1.2rem;
+      border-radius: 8px;
+      overflow-x: auto;
+      margin: 1.2rem 0;
+      border-left: 4px solid var(--primary);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 1.2rem 0;
+    }
+
+    th, td {
+      border: 1px solid var(--border);
+      padding: 0.8rem;
+      text-align: left;
+    }
+
+    th {
+      background: var(--code-bg);
+      font-weight: 600;
+    }
+
+    .card {
+      background: var(--code-bg);
+      padding: 1.2rem;
+      border-radius: 8px;
+      margin: 1.5rem 0;
+    }
+
+    .tip {
+      background: var(--success);
+      border-left: 4px solid #0d9488;
+      padding: 1rem;
+      border-radius: 0 6px 6px 0;
+    }
+
+    .warning {
+      background: var(--warning);
+      border-left: 4px solid #d97706;
+      padding: 1rem;
+      border-radius: 0 6px 6px 0;
+    }
+
+    .danger {
+      background: var(--danger);
+      border-left: 4px solid #dc2626;
+      padding: 1rem;
+      border-radius: 0 6px 6px 0;
+    }
+
+    footer {
+      margin-top: 3rem;
+      padding-top: 1.5rem;
+      border-top: 1px solid var(--border);
+      color: var(--text-secondary);
+      font-size: 0.9rem;
+    }
+
+    @media print {
+      body {
+        padding: 1rem;
+        max-width: 100%;
+      }
+      pre, code {
+        white-space: pre-wrap;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<h1>📘 CanTrack v2.0 – Virtual Signals User Guide</h1>
+
+<p>Virtual signals let you <strong>create new signals on-the-fly</strong> using mathematical expressions based on existing CAN signals. This is useful for computing derived values like power, efficiency, ratios, clamped values, or unit conversions — all within the analyzer, without modifying your original data.</p>
+
+<h2>✅ 1. Where to Enter Virtual Signals</h2>
+<p>In the <strong>“Virtual Signal”</strong> section of the CanTrack sidebar:</p>
+<ul>
+  <li><strong>Input field</strong>: <code>ex: Power = Voltage * Current</code></li>
+  <li><strong>Button</strong>: Click <strong>“Add Virtual Signal”</strong> to create it.</li>
+</ul>
+<p>Once added, the new signal appears in the signal list and can be plotted, filtered, or used in other expressions.</p>
+
+<h2>✅ 2. Basic Syntax</h2>
+<p>Use this format:</p>
+<pre>NewSignalName = expression</pre>
+
+<h3>Rules:</h3>
+<ul>
+  <li>Exactly one <code>=</code> sign</li>
+  <li>Signal names must match those in your JSON data (case-sensitive)</li>
+  <li>No spaces in signal names (use underscores: <code>Battery_Voltage</code>)</li>
+  <li>Expression is evaluated <strong>at every time point</strong> using current values</li>
+</ul>
+
+<h3>✅ Valid Examples:</h3>
+<pre>Power = Voltage * Current
+Efficiency = (OutputPower / InputPower) * 100
+ClampedTemp = Math.max(Math.min(Temperature, 120), -40)
+SquaredRPM = Math.pow(RPM, 2)
+Speed_kmh = Speed_mps * 3.6
+Angle_rad = Angle_deg * Math.PI / 180</pre>
+
+<h2>✅ 3. Allowed Operations & Functions</h2>
+
+<h3>Arithmetic Operators</h3>
+<table>
+  <thead>
+    <tr><th>Operator</th><th>Description</th><th>Example</th></tr>
+  </thead>
+  <tbody>
+    <tr><td><code>+</code></td><td>Addition</td><td><code>A + B</code></td></tr>
+    <tr><td><code>-</code></td><td>Subtraction</td><td><code>Voltage - Offset</code></td></tr>
+    <tr><td><code>*</code></td><td>Multiplication</td><td><code>Current * Resistance</code></td></tr>
+    <tr><td><code>/</code></td><td>Division</td><td><code>Power / Voltage</code></td></tr>
+    <tr><td><code>%</code></td><td>Modulo</td><td><code>Counter % 100</code></td></tr>
+    <tr><td><code>**</code> or <code>Math.pow(x,y)</code></td><td>Power</td><td><code>RPM ** 2</code></td></tr>
+  </tbody>
+</table>
+
+<h3>Math Functions (use <code>Math.</code> prefix)</h3>
+<table>
+  <thead>
+    <tr><th>Function</th><th>Description</th><th>Example</th></tr>
+  </thead>
+  <tbody>
+    <tr><td><code>Math.abs(x)</code></td><td>Absolute value</td><td><code>Math.abs(Error)</code></td></tr>
+    <tr><td><code>Math.sqrt(x)</code></td><td>Square root</td><td><code>Math.sqrt(Power)</code></td></tr>
+    <tr><td><code>Math.pow(x, y)</code></td><td>x to the power of y</td><td><code>Math.pow(V, 2)</code></td></tr>
+    <tr><td><code>Math.min(a, b, ...)</code></td><td>Minimum</td><td><code>Math.min(Temp, 100)</code></td></tr>
+    <tr><td><code>Math.max(a, b, ...)</code></td><td>Maximum</td><td><code>Math.max(Speed, 0)</code></td></tr>
+    <tr><td><code>Math.round(x)</code></td><td>Round to integer</td><td><code>Math.round(RPM)</code></td></tr>
+    <tr><td><code>Math.sin(x)</code>, <code>Math.cos(x)</code></td><td>Trigonometry (radians)</td><td><code>Math.sin(Angle)</code></td></tr>
+    <tr><td><code>Math.log(x)</code></td><td>Natural logarithm</td><td><code>Math.log(Pressure)</code></td></tr>
+  </tbody>
+</table>
+
+<p><strong>Constants:</strong> <code>Math.PI</code>, <code>Math.E</code></p>
+
+<h2>⚠️ 4. Common Mistakes</h2>
+
+<div class="danger">
+  <p><strong>❌ Invalid: Missing arguments or syntax errors</strong></p>
+  <pre>tabit = Math.max(L_IORpt_Vbulk)     // ❌ Needs ≥2 args
+tabit = Math.pow(P_VacRpt_Counter)   // ❌ Needs exponent
+Power = Voltage *                    // ❌ Incomplete
+New Signal = A + B                   // ❌ No spaces in name</pre>
+</div>
+
+<div class="warning">
+  <p><strong>⚠️ Technically runs but useless</strong></p>
+  <pre>tabit = Math.max(Signal)  // → just returns Signal</pre>
+</div>
+
+<div class="tip">
+  <p><strong>✅ Corrected versions:</strong></p>
+  <pre>tabit = Math.max(L_IORpt_Vbulk, 0)
+tabit = Math.pow(P_VacRpt_Counter, 2)
+Power = Voltage * Current
+NewSignal = A + B</pre>
+</div>
+
+<h2>💡 5. Pro Tips</h2>
+<ul>
+  <li><strong>Chain virtual signals</strong>:<br>
+    <code>Power = Voltage * Current</code><br>
+    <code>Energy = Power * 0.01</code>  <!-- assuming 10ms sample -->
+  </li>
+  <li><strong>Clamp noisy data</strong>:<br>
+    <code>SafeVolt = Math.max(Math.min(RawVolt, 14.5), 11.0)</code>
+  </li>
+  <li><strong>Unit conversion</strong>:<br>
+    <code>SOC_pct = SOC_raw * 100</code>
+  </li>
+</ul>
+
+<h2>❓ Limitations</h2>
+<p>Virtual signals are computed <strong>point-wise</strong> (per timestamp). They cannot:</p>
+<ul>
+  <li>Access past/future values (no moving average)</li>
+  <li>Use conditional logic (<code>if</code>, ternary)</li>
+  <li>Perform time-based aggregations (min over 1s window)</li>
+</ul>
+<p>👉 These features may be added in future versions.</p>
+
+<footer>
+  <p>CanTrack v2.0 – Advanced CAN Analyzer<br>
+  Documentation generated for tabit.laamouri@gmail.com</p>
+</footer>
+
+</body>
+</html>
